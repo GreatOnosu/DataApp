@@ -44,8 +44,18 @@ app.use(compression());
 app.use(express.json());
 app.use(limiter);
 
+app.use((req, res, next) => {
+    let key = req.query.key;
+    if(!key || key !== '12345'){
+        res.status(403).send();
+    }
+    next();
+})
+
 app.get('/data', async (req, res) => {
-    const allData = await SensorData.findAll();
+    let limit = req.query.limit || 5;
+    let offset = req.query.offset || 0;
+    const allData = await SensorData.findAll({ limit, offset });
     res.status(200).send(allData);
     return;
 });

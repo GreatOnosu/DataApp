@@ -1,11 +1,13 @@
 const express = require('express');
 const { Sequelize, DataTypes } = require('sequelize');
+const helmet = require('helmet');
+const compression = require('compression');
+const rateLimit = require("express-rate-limit");
 
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
-    protocol: 'postgres',
-    dialectOptions: {},
+    
 });
 
 const SensorData =  sequelize.define('sensor-data', {
@@ -23,13 +25,31 @@ const SensorData =  sequelize.define('sensor-data', {
     }
 });
 
+const limiter = rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minutes
+    max: 10 // limit each IP to 10 requests per windowMs
+  });
+
 const app = express();
 
-app.use(express.json());
 
+app.use(helmet());
+app.use(compression());
+app.use(express.json());
+app.use(limiter);
+
+app.use((req, res, next) => {
+    let key = req.query.key;
+    if(!key || key !== '12345'){
+        res.status(403).send();
+    }
+    next();
+})
 
 app.get('/data', async (req, res) => {
-    const allData = await SensorData.findAll();
+    let limit = req.query.limit || 5;
+    let offset = req.query.offset || 0;
+    const allData = await SensorData.findAll({ limit, offset });
     res.status(200).send(allData);
     return;
 });
