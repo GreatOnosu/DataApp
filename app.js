@@ -6,17 +6,26 @@ const rateLimit = require("express-rate-limit");
 
 const nodeEnv =  process.env.NODE_ENV;
 
+const dbSocketPath = process.env.DB_SOCKET_PATH || '/cloudsql';
+const user = process.env.DB_USER;
+const password = process.env.DB_PASS;
+const database = process.env.DB_NAME;
+const host = `${dbSocketPath}/${process.env.CLOUD_SQL_CONNECTION_NAME}`;
+
+
 const sequelize = nodeEnv === 'test' ? 
     new Sequelize('sqlite::memory:') :
-    new Sequelize(process.env.DATABASE_URL, {
-    dialect: 'postgres',
-    protocol: 'postgres',
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false
-        }
-    },
+    // new Sequelize(process.env.DATABASE_URL, {
+    new Sequelize(user, password, database, {
+        host: host,
+        dialect: 'postgres'
+        // protocol: 'postgres',
+        // dialectOptions: {
+        //     ssl: {
+        //         require: true,
+        //         rejectUnauthorized: false
+        //     }
+        // },
 });
 
 const SensorData =  sequelize.define('sensorData', {
