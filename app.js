@@ -4,19 +4,22 @@ const helmet = require('helmet');
 const compression = require('compression');
 const rateLimit = require("express-rate-limit");
 
+const nodeEnv =  process.env.NODE_ENV;
 
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
+const sequelize = nodeEnv === 'test' ? 
+    new Sequelize('sqlite::memory:') :
+    new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     protocol: 'postgres',
-    dialectOptions: {
-        ssl: {
-            require: true,
-            rejectUnauthorized: false
-        }
-    },
+    // dialectOptions: {
+    //     ssl: {
+    //         require: true,
+    //         rejectUnauthorized: false
+    //     }
+    // },
 });
 
-const SensorData =  sequelize.define('sensor-data', {
+const SensorData =  sequelize.define('sensorData', {
     serial: {
         type: DataTypes.STRING,
         allowNull:  false
@@ -68,14 +71,17 @@ app.post('/data', async (req, res) => {
 });
 
 
-app.listen({port: 8080}, () => {
-    try {
-        sequelize.authenticate();
-        console.log('Connected to DB');
-        sequelize.sync({ alter:true });
-        console.log('Sync to DB');
-    } catch (error) {
-        console.log('Could not connect to DB', error);
-    }
-    console.log('Server is  running');
-});
+// app.listen({port: 8080}, () => {
+//     try {
+//         sequelize.authenticate();
+//         console.log('Connected to DB');
+//         sequelize.sync({ alter:true });
+//         console.log('Sync to DB');
+//     } catch (error) {
+//         console.log('Could not connect to DB', error);
+//     }
+//     console.log('Server is  running');
+// });
+
+
+module.exports = { app, sequelize};
